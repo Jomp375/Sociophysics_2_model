@@ -13,7 +13,7 @@ num_agents = 20
 
 # Set the radius of the circle around each agent
 circle_radius = 2.5
-interaction_force = 0.1
+interaction_force = 0.15
 
 # Set the location of the train door
 door_location = np.array([area_size / 2, area_size])
@@ -36,8 +36,8 @@ start_entering = 150
 time_step = 1
 kp = 1
 kv = 0.5
-damping_coefficient = 0.25  # Damping coefficient for realistic damping force
-max_velocity = 0.5
+damping_coefficient = 0.35  # Damping coefficient for realistic damping force
+max_velocity = 1
 
 # Additional force for people standing between y=18 and y=20
 dangerzone_force = 0.08
@@ -58,12 +58,12 @@ def generate_random_coordinates(num_agents, min_distance):
 # Function to calculate the force between two agents based on distance
 def calculate_force(distance):
     # Linearly decreasing force from interaction_force to 0 for distances between 0 and circle_radius
-    return interaction_force * (1 - distance / circle_radius)
+    return interaction_force * np.square((1 - distance / circle_radius))
 
 
 # Initialize total force components for each agent
 total_force_components = np.zeros((num_agents, 2))
-# Generate random coordinates for the agents within the area (ensuring they are at least initial_distance_agents meters apart)
+# Generate random coordinates for the agents within the area
 agent_coordinates = generate_random_coordinates(num_agents, initial_distance_agents)
 # Randomize velocities to all directions and magnitudes between -1 and 1
 agent_velocities = (np.random.rand(num_agents,
@@ -115,8 +115,8 @@ for timestamp in range(num_timestamps):
         # resistance force to prevent large velocities
         resistance_force = -damping_coefficient * agent_velocities[i]
         agent_speed = np.linalg.norm(agent_velocities[i])
-        if agent_velocities< max_velocity:
-            resistance_force *=  max_velocity / agent_speed
+        if agent_speed > max_velocity:
+            resistance_force *=  agent_speed/max_velocity
         total_force_components[i] += resistance_force
 
         # Additional force for people standing higher than y=18
