@@ -40,7 +40,6 @@ class Agent:
     def update_position(self, timestep: int):
         # Implement method to update agent's position
         self.position += timestep * self.velocity
-
         pass
 
     def update_velocity(self, timestep: int, total_force):
