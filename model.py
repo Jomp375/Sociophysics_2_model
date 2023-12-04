@@ -1,6 +1,7 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
+from ipywidgets import HTML
 from matplotlib.animation import FuncAnimation
 from matplotlib.patches import Polygon
 
@@ -204,6 +205,10 @@ for timestamp in range(num_timestamps):
     agent_data_animatie = pd.concat([agent_data_animatie, timestamp_agent_data], ignore_index=True)
 
 
+# Create a figure and axis for the plot
+fig, ax = plt.subplots(figsize=(8, 6))
+
+# Define the update function for the animation
 def update(frame):
     plt.clf()  # Clear the previous plot
 
@@ -230,14 +235,11 @@ def update(frame):
     plt.grid(True)
 
 
-# Set up the figure and axis
-fig, ax = plt.subplots()
-
 # Get unique time values from the DataFrame
 unique_times = agent_data_animatie['Time'].unique()
 
 # Create the animation
 animation = FuncAnimation(fig, update, frames=unique_times, interval=50, repeat=False)
 
-# Display the animation
-plt.show()
+# Save the animation as a video file
+animation.save('agent_animation.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
