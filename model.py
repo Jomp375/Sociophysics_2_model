@@ -37,12 +37,12 @@ class Agent:
         return total_force  # Convert if necessary
         pass
 
-    def update_position(self, timestep: int):
+    def update_position(self, timestep):
         # Implement method to update agent's position
         self.position += timestep * self.velocity
         pass
 
-    def update_velocity(self, timestep: int, total_force):
+    def update_velocity(self, timestep, total_force):
         # Implement method to update agent's velocity based on total force
         self.velocity += timestep * total_force
         pass
@@ -71,20 +71,23 @@ class Agent:
 # Set the size of the area
 area_size = 20  # in meters
 
-dangerzoney = area_size - 2;
+dangerzoney = area_size - 2
 # Set the number of agents
 num_agents = 20
-
-# Set the radius of the circle around each agent
 circle_radius = 2.5
-interaction_force = 0.15
+# Set the radius of the circle around each agent
 
+
+interaction_force = 0.12
+constant_force_magnitude = 0.07
+damping_coefficient = 0.4  # Damping coefficient for realistic damping force
+dangerzone_force = 0.10
 # Set the location of the train door
 door_location = np.array([area_size / 2, area_size])
 
 # Set the distance for the constant force towards the train door
 constant_force_distance = 2.0
-constant_force_magnitude = 0.05
+
 constant_force_magnitude_initial = constant_force_magnitude
 
 # Set the initial distance between agents
@@ -98,31 +101,30 @@ num_timestamps = 250
 start_leaving = 75
 start_entering = 150
 time_step = 1
-damping_coefficient = 0.35  # Damping coefficient for realistic damping force
+
 max_velocity = 1
 
 # Additional force for people standing between y=18 and y=20
-dangerzone_force = 0.08
+
 # Force to prevent blocking the train door
-door_force_magnitude = 0.05
+door_force_magnitude = 0.1
 
 # Function to ensure agents are at least initial_distance_agents meters apart from each other
 # Assuming you have 'num_agents' as the number of agents
 indices = [i for i in range(num_agents)]
 
-agents = [Agent(i,np.random.rand(2) * area_size, (np.random.rand(2) * 2 - 1) * initial_velocity, 'Blue') for i in
+agents = [Agent(i, np.random.rand(2) * area_size, (np.random.rand(2) * 2 - 1) * initial_velocity, 'Blue') for i in
           indices]
 
 # Create a DataFrame to store the information
 columns = ['ID', 'Time', 'X Position', 'Y Position', 'X Velocity', 'Y Velocity', 'X Force', 'Y Force', 'Type']
 agent_data_animatie = pd.DataFrame(columns=columns)
 
-
 # Main simulation loop
 for timestamp in range(num_timestamps):
-    timestamp_agent_data = pd.DataFrame(columns=['ID', 'Time','X Position','Y Position',
-                                                   'X Velocity', 'Y Velocity','X Force',
-                                                   'Y Force','Type'])
+    timestamp_agent_data = pd.DataFrame(columns=['ID', 'Time', 'X Position', 'Y Position',
+                                                 'X Velocity', 'Y Velocity', 'X Force',
+                                                 'Y Force', 'Type'])
     for i in range(num_agents):
         agent = agents[i]
         total_force_components = np.zeros(2)  # Reset total force components
@@ -170,9 +172,9 @@ for timestamp in range(num_timestamps):
         net_force_magnitude = np.linalg.norm(total_force_components)
 
         # Introduce opposing force when net force magnitude is less than 0.5
-        if net_force_magnitude < 0.5:
+        if (net_force_magnitude < 0.5) & (agent.getvelocity().all() < 0.4):
             # Calculate opposing force as the opposite of the net force
-            opposing_force = -total_force_components
+            opposing_force = -total_force_components - agent.getvelocity()*timestamp
 
             # Add the opposing force to total force components
             total_force_components += opposing_force
@@ -197,12 +199,10 @@ for timestamp in range(num_timestamps):
             'Type': agent.gettype()
         }, index=indices)
 
-        timestamp_agent_data = pd.concat([timestamp_agent_specific_data,timestamp_agent_data],ignore_index=True)
+        timestamp_agent_data = pd.concat([timestamp_agent_specific_data, timestamp_agent_data], ignore_index=True)
 
     agent_data_animatie = pd.concat([agent_data_animatie, timestamp_agent_data], ignore_index=True)
 
-# Plotting
-fig, ax = plt.subplots(figsize=(10, 10))
 
 def update(frame):
     plt.clf()  # Clear the previous plot
