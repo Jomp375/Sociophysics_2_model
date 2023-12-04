@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from ipywidgets import HTML
 from matplotlib.animation import FuncAnimation
 from matplotlib.patches import Polygon
 
@@ -74,7 +73,7 @@ area_size = 20  # in meters
 
 dangerzoney = area_size - 2
 # Set the number of agents
-num_agents = 20
+num_agents = 15
 circle_radius = 2.5
 # Set the radius of the circle around each agent
 
@@ -85,11 +84,9 @@ damping_coefficient = 0.4  # Damping coefficient for realistic damping force
 dangerzone_force = 0.10
 # Set the location of the train door
 door_location = np.array([area_size / 2, area_size])
-
+door_width = 2
 # Set the distance for the constant force towards the train door
 constant_force_distance = 2.0
-
-constant_force_magnitude_initial = constant_force_magnitude
 
 # Set the initial distance between agents
 initial_distance_agents = 1.5  # initial minimal spread
@@ -108,7 +105,7 @@ max_velocity = 1
 # Additional force for people standing between y=18 and y=20
 
 # Force to prevent blocking the train door
-door_force_magnitude = 0.1
+door_force_magnitude = 0.15
 
 # Function to ensure agents are at least initial_distance_agents meters apart from each other
 # Assuming you have 'num_agents' as the number of agents
@@ -130,11 +127,10 @@ for timestamp in range(num_timestamps):
         agent = agents[i]
         total_force_components = np.zeros(2)  # Reset total force components
         if timestamp < start_entering:
-            constant_force_distance = 2.0  # Use the original value before time 150
+            constant_force_distance = 2.4  # Use the original value before time 150
         else:
             constant_force_distance = 0  # Set to 0 after time 150
-            constant_force_magnitude = ((2 - np.linalg.norm(agent.getposition() - door_location) / 7)
-                                        * constant_force_magnitude_initial)
+
         for j in range(num_agents):
             if i != j:
                 agent2 = agents[j]
@@ -157,17 +153,18 @@ for timestamp in range(num_timestamps):
         # Additional force for people standing higher than y=18
         if dangerzoney <= agent.getposition()[1]:
             if timestamp < start_entering or (
-                    timestamp >= start_entering and (agent.getposition()[0] <= 9 or 11 <= agent.getposition()[0])):
+                    timestamp >= start_entering and
+                    (agent.getposition()[0] <= door_location[0]-door_width/2 or door_location[0]+door_width/2 <= agent.getposition()[0])):
                 total_force_components[1] -= dangerzone_force * (agent.getposition()[1] - dangerzoney)
 
         # Force to prevent blocking the train door
-        if timestamp < start_entering:
-            if 8 <= agent.getposition()[0] <= 10 <= agent.getposition()[1]:
-                door_force = door_force_magnitude * ((agent.getposition()[0] - 8) / 2)
+        if timestamp < start_entering and door_location[1]-3*door_width <= agent.getposition()[1]:
+            if door_location[0]-2*door_width/3 <= agent.getposition()[0] <= door_location[0]:
+                door_force = door_force_magnitude * (agent.getposition()[0]-(door_location[0]-2*door_width/3)) / 2
                 total_force_components[0] -= door_force
 
-            if 10 < agent.getposition()[0] <= 12 and 10 <= agent.getposition()[1]:
-                door_force = door_force_magnitude * (-(agent.getposition()[0] - 12) / 2)
+            if door_location[0] < agent.getposition()[0] <= door_location[0]+2*door_width/3:
+                door_force = door_force_magnitude * ((door_location[0]+2*door_width/3) - agent.getposition()[0]) / 2
                 total_force_components[0] += door_force
         # Calculate the net force magnitude
         net_force_magnitude = np.linalg.norm(total_force_components)
@@ -205,10 +202,6 @@ for timestamp in range(num_timestamps):
     agent_data_animatie = pd.concat([agent_data_animatie, timestamp_agent_data], ignore_index=True)
 
 
-# Create a figure and axis for the plot
-fig, ax = plt.subplots(figsize=(8, 6))
-
-# Define the update function for the animation
 def update(frame):
     plt.clf()  # Clear the previous plot
 
@@ -217,7 +210,7 @@ def update(frame):
     plt.scatter(agent_data_frame['X Position'], agent_data_frame['Y Position'], label='Agent Positions')
 
     # Add a marker as a train door
-    plt.scatter(10, 20, marker='o', color='orange', s=200, label='Train Door')
+    plt.scatter(door_location[0],door_location[1], marker='o', color='orange', s=200, label='Train Door')
 
     # Draw the train door box
     door_vertices = np.array(
@@ -234,6 +227,8 @@ def update(frame):
     plt.title(f'Time = {frame}')
     plt.grid(True)
 
+# Set up the figure and axis
+fig, ax = plt.subplots()
 
 # Get unique time values from the DataFrame
 unique_times = agent_data_animatie['Time'].unique()
@@ -241,5 +236,5 @@ unique_times = agent_data_animatie['Time'].unique()
 # Create the animation
 animation = FuncAnimation(fig, update, frames=unique_times, interval=50, repeat=False)
 
-# Save the animation as a video file
-animation.save('agent_animation.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
+# Display the animation
+plt.show()
