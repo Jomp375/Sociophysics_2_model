@@ -102,7 +102,7 @@ initial_velocity = 0.1
 
 # Set the time step, number of timestamps and the constant for updating positions and velocities
 num_timestamps = 250
-start_leaving = 75
+start_leaving = 100
 start_entering = 150
 time_step = 1
 
@@ -112,7 +112,7 @@ max_velocity = 1
 
 # Force to prevent blocking the train door
 door_force_magnitude = 0.15
-
+red_door_force_magnitude = 0.02
 # Function to ensure agents are at least initial_distance_agents meters apart from each other
 # Assuming you have 'num_agents' as the number of agents
 blue_indices = [i for i in range(num_blue_agents)]
@@ -123,7 +123,7 @@ red_indices = [i for i in range(num_red_agents)]
 red_positions = []
 for i in range(num_red_agents):
     x_position = np.random.uniform(door_location[0] - door_width/2, door_location[0] + door_width/2)
-    y_position = np.random.uniform(area_size+1, area_size +1)
+    y_position = np.random.uniform(area_size+0.5, area_size +3)
     red_positions.append([x_position, y_position])
 
 # Create red agents with initial positions meeting the criteria
@@ -140,10 +140,8 @@ for timestamp in range(num_timestamps):
                                                  'Y Force', 'Type'])
     if timestamp < start_entering:
         constant_force_distance = 2.4  # Use the original value before time 150
-        red_guys_leaving = False
     else:
         constant_force_distance = 0  # Set to 0 after time 150
-        red_guys_leaving = True
     for i in range(num_blue_agents + num_red_agents):
         if i < num_blue_agents:
             current_agent = blue_agents[i]
@@ -159,8 +157,7 @@ for timestamp in range(num_timestamps):
                 else:
                     agent2 = red_agents[j-num_blue_agents]
                 # apply forces with each other
-                if current_agent.gettype()=='Blue' or (current_agent.gettype()=='Red' and red_guys_leaving):
-                    total_force_components += current_agent.calculate_force(agent2, door_location, stairs_location)
+                total_force_components += current_agent.calculate_force(agent2, door_location, stairs_location)
         # Constant force towards the train door
         if current_agent.gettype() == 'Blue':
             distance_to_door = np.linalg.norm(current_agent.getposition() - door_location)
@@ -184,20 +181,25 @@ for timestamp in range(num_timestamps):
                     door_force = door_force_magnitude * ((door_location[0]+2*door_width/3) - current_agent.getposition()[0]) / 2
                     total_force_components[0] += door_force
 
-        elif current_agent.gettype() == 'Red' and red_guys_leaving:
-            # Force for going towards the stairs
-            distance_to_stairs = np.linalg.norm(current_agent.getposition() - stairs_location)
-            force_direction_to_stairs = (stairs_location - current_agent.getposition()) / distance_to_stairs
-            total_force_components += constant_force_magnitude * force_direction_to_stairs
-
+        elif current_agent.gettype() == 'Red':
+            if timestamp > start_leaving:
+                # Force for going towards the stairs
+                distance_to_stairs = np.linalg.norm(current_agent.getposition() - stairs_location)
+                force_direction_to_stairs = (stairs_location - current_agent.getposition()) / distance_to_stairs
+                total_force_components +=  constant_force_magnitude * force_direction_to_stairs
+            else:
+                # Force to go stand in front of the train door
+                if np.linalg.norm(current_agent.getposition() - door_location) > 0.8:
+                    force_direction_to_door = (door_location - current_agent.getposition()) / distance_to_door
+                    total_force_components += 2*constant_force_magnitude * force_direction_to_door
             # Force to go through the train door
-            if timestamp < start_entering and door_location[1]-3*door_width <= current_agent.getposition()[1]:
-                if door_location[0]-2*door_width/3 <= current_agent.getposition()[0] <= door_location[0]:
-                    door_force = door_force_magnitude * (current_agent.getposition()[0] - (door_location[0] - 2 * door_width / 3)) / 2
-                    total_force_components[0] -= door_force
+            if door_location[1]-door_width/2 <= current_agent.getposition()[1]:
+                if current_agent.getposition()[0] <= door_location[0]:
+                    door_force = red_door_force_magnitude * (-current_agent.getposition()[0] + door_location[0])
+                    total_force_components[0] += door_force
 
-                if door_location[0] < current_agent.getposition()[0] <= door_location[0]+2*door_width/3:
-                    door_force = door_force_magnitude * ((door_location[0]+2*door_width/3) - current_agent.getposition()[0]) / 2
+                if door_location[0] < current_agent.getposition()[0]:
+                    door_force = red_door_force_magnitude * (-door_location[0] + current_agent.getposition()[0])
                     total_force_components[0] += door_force
 
         # Calculate the net force magnitude
