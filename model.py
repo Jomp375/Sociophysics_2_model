@@ -282,6 +282,7 @@ unique_times = agent_data_animatie['Time'].unique()
 
 # Create the animation
 animation = FuncAnimation(fig, update, frames=unique_times, interval=50, repeat=False)
-
+#animation.convert_path: 'C:\Program Files\ImageMagick-7.1.1-Q16-HDRI\convert.exe'
+#animation.save('animation.gif', writer='imagemagick', fps=30)
 # Display the animation
 plt.show()
