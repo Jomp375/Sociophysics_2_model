@@ -76,8 +76,8 @@ area_size = 20  # in meters
 
 dangerzoney = area_size - 2
 # Set the number of agents
-num_blue_agents = 15
-num_red_agents = 4
+num_blue_agents = 20
+num_red_agents = 10
 circle_radius = 2.5
 red_circle_radius = 1.5
 # Set the radius of the circle around each agent
@@ -89,7 +89,7 @@ damping_coefficient = 0.4  # Damping coefficient for realistic damping force
 dangerzone_force = 0.10
 # Set the location of the train door
 door_location = np.array([area_size / 2, area_size])
-stairs_location = np.array([area_size / 2, 2])
+stairs_location = np.array([0,area_size / 2])
 door_width = 2
 # Set the distance for the constant force towards the train door
 constant_force_distance = 2.0
@@ -101,7 +101,7 @@ initial_distance_agents = 1.5  # initial minimal spread
 initial_velocity = 0.1
 
 # Set the time step, number of timestamps and the constant for updating positions and velocities
-num_timestamps = 250
+num_timestamps = 300
 start_leaving = 100
 start_entering = 150
 time_step = 1
@@ -112,7 +112,7 @@ max_velocity = 1
 
 # Force to prevent blocking the train door
 door_force_magnitude = 0.15
-red_door_force_magnitude = 0.02
+red_door_force_magnitude = 0.1
 # Function to ensure agents are at least initial_distance_agents meters apart from each other
 # Assuming you have 'num_agents' as the number of agents
 blue_indices = [i for i in range(num_blue_agents)]
@@ -194,7 +194,7 @@ for timestamp in range(num_timestamps):
                     force_direction_to_door = (door_location - current_agent.getposition()) / distance_to_door
                     total_force_components += 2*constant_force_magnitude * force_direction_to_door
             # Force to go through the train door
-            if door_location[1]-door_width/2 <= current_agent.getposition()[1]:
+            if door_location[1]-door_width <= current_agent.getposition()[1]:
                 if current_agent.getposition()[0] <= door_location[0]:
                     door_force = 2*red_door_force_magnitude * (-current_agent.getposition()[0] + door_location[0])
                     total_force_components[0] += door_force
@@ -214,9 +214,9 @@ for timestamp in range(num_timestamps):
         total_force_components += resistance_force
 
         # Introduce opposing force when net force magnitude is less than 0.5
-        if (net_force_magnitude < 0.05) & (current_agent.getvelocity().all() < 0.4):
+        if (net_force_magnitude < 0.09) & (current_agent.getvelocity().all() < 0.4):
             # Calculate opposing force as the opposite of the net force
-            opposing_force = -total_force_components - current_agent.getvelocity() * timestamp
+            opposing_force = -total_force_components - (current_agent.getvelocity() / time_step)
 
             # Add the opposing force to total force components
             total_force_components += opposing_force
