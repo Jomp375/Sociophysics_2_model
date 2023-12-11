@@ -25,17 +25,15 @@ class Agent:
         distance_to_door_agent_j = np.linalg.norm(other_agent.getposition() - door_location)
         distance_to_stairs_agent_i = np.linalg.norm(self.position - stairs_location)
         distance_to_stairs_agent_j = np.linalg.norm(other_agent.getposition() - stairs_location)
-
-        if distance < circle_radius:
-            if ((self.type == 'Blue') and (distance_to_door_agent_i > distance_to_door_agent_j)) or ((self.type == 'Red') and (distance_to_stairs_agent_i > distance_to_stairs_agent_j)):
-                force_magnitude = interaction_force * np.square((1 - distance / circle_radius))
-            # Calculate force magnitude
-            # quadratically decreasing force from interaction_force to 0 for distances between 0 and circle_radius
+        if self.type == 'Blue' and distance_to_door_agent_i > distance_to_door_agent_j and distance < circle_radius:
+            force_magnitude = interaction_force * np.square((1 - distance / circle_radius))
+        elif self.type == 'Red' and distance_to_stairs_agent_i > distance_to_stairs_agent_j and distance < red_circle_radius:
+            force_magnitude = interaction_force * np.square((1 - distance / red_circle_radius))
             # Calculate force direction (away from the agent providing the force)
-            force_direction = -distance_vector / distance
+        force_direction = -distance_vector / distance
 
-            # Accumulate force components
-            total_force = force_magnitude * force_direction
+        # Accumulate force components
+        total_force = force_magnitude * force_direction
         return total_force  # Convert if necessary
         pass
 
@@ -80,6 +78,7 @@ dangerzoney = area_size - 2
 num_blue_agents = 15
 num_red_agents = 4
 circle_radius = 2.5
+red_circle_radius = 1.5
 # Set the radius of the circle around each agent
 
 
@@ -186,20 +185,21 @@ for timestamp in range(num_timestamps):
                 # Force for going towards the stairs
                 distance_to_stairs = np.linalg.norm(current_agent.getposition() - stairs_location)
                 force_direction_to_stairs = (stairs_location - current_agent.getposition()) / distance_to_stairs
-                total_force_components +=  constant_force_magnitude * force_direction_to_stairs
+                total_force_components += constant_force_magnitude * force_direction_to_stairs
             else:
+                distance_to_door = np.linalg.norm(current_agent.getposition() - door_location)
                 # Force to go stand in front of the train door
-                if np.linalg.norm(current_agent.getposition() - door_location) > 0.8:
+                if distance_to_door > 0.8:
                     force_direction_to_door = (door_location - current_agent.getposition()) / distance_to_door
                     total_force_components += 2*constant_force_magnitude * force_direction_to_door
             # Force to go through the train door
             if door_location[1]-door_width/2 <= current_agent.getposition()[1]:
                 if current_agent.getposition()[0] <= door_location[0]:
-                    door_force = red_door_force_magnitude * (-current_agent.getposition()[0] + door_location[0])
+                    door_force = 2*red_door_force_magnitude * (-current_agent.getposition()[0] + door_location[0])
                     total_force_components[0] += door_force
 
                 if door_location[0] < current_agent.getposition()[0]:
-                    door_force = red_door_force_magnitude * (-door_location[0] + current_agent.getposition()[0])
+                    door_force = 2*red_door_force_magnitude * (door_location[0] - current_agent.getposition()[0])
                     total_force_components[0] += door_force
 
         # Calculate the net force magnitude
