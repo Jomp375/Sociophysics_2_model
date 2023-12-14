@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import cm
 from matplotlib.animation import FuncAnimation
+from matplotlib.animation import PillowWriter
 from matplotlib.patches import Polygon
 
 
@@ -14,6 +15,7 @@ class Agent:
         self.type = type
         self.competitiveness = competitiveness  # Example of additional variable
         self.max_velocity = np.random.rand(1) + self.competitiveness
+        self.frustration = None
 
     def calculate_force(self, other_agent, door_location, stairs_location):
         total_force = np.zeros(2)
@@ -90,17 +92,22 @@ circle_radius = 2.5
 red_circle_radius = 1.5
 # Set the radius of the circle around each agent
 
-
+# Constants for the forces
 interaction_force = 0.10
 constant_force_magnitude = 0.05
 damping_coefficient = 0.5  # Damping coefficient for realistic damping force
 dangerzone_force = 0.10
+door_force_magnitude = 0.15
+red_door_force_magnitude = 0.1
+
+# Set the distance for the constant force towards the train door
+constant_force_distance = 2.0
+
 # Set the location of the train door
 door_location = np.array([area_size_x * 1/2, area_size_y])
 stairs_location = np.array([0,area_size_y / 2])
 door_width = 2
-# Set the distance for the constant force towards the train door
-constant_force_distance = 2.0
+
 
 # Set the initial distance between agents
 initial_distance_agents = 1.5  # initial minimal spread
@@ -115,12 +122,6 @@ start_entering = 150
 time_step = 1
 
 
-
-# Additional force for people standing between y=18 and y=20
-
-# Force to prevent blocking the train door
-door_force_magnitude = 0.15
-red_door_force_magnitude = 0.1
 # Function to ensure agents are at least initial_distance_agents meters apart from each other
 # Assuming you have 'num_agents' as the number of agents
 blue_indices = [i for i in range(num_blue_agents)]
@@ -307,6 +308,8 @@ unique_times = agent_data_animatie['Time'].unique()
 
 # Create the animation
 animation = FuncAnimation(fig, update, frames=unique_times, interval=50, repeat=True)
-
+# To save the animation using Pillow as a gif
+writer = PillowWriter(fps=15,metadata=dict(artist='Me'),bitrate=1800)
+animation.save('boarding_animation.gif', writer=writer)
 # Display the animation
 plt.show()
