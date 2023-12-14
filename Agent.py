@@ -44,6 +44,7 @@ class Agent:
         self.position += timestep * self.velocity
         pass
 
+
     def update_velocity(self, timestep, total_force):
         # Convert self.velocity to float64 if it's of integer type
         self.velocity = self.velocity.astype(np.float64)
