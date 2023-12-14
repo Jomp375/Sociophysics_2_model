@@ -6,12 +6,12 @@ from matplotlib.patches import Polygon
 
 
 class Agent:
-    def __init__(self, id, initial_position, initial_velocity, type):
+    def __init__(self, id, initial_position, initial_velocity, type, ):
         self.id = id
         self.position = initial_position
         self.velocity = initial_velocity
         self.type = type
-        self.additional_variable = None  # Example of additional variable
+        self.competitiveness = None  # Example of additional variable
 
     def calculate_force(self, other_agent, door_location, stairs_location):
         total_force = np.zeros(2)
@@ -281,7 +281,7 @@ fig, ax = plt.subplots()
 unique_times = agent_data_animatie['Time'].unique()
 
 # Create the animation
-animation = FuncAnimation(fig, update, frames=unique_times, interval=50, repeat=False)
+animation = FuncAnimation(fig, update, frames=unique_times, interval=50, repeat=True)
 #animation.convert_path: 'C:\Program Files\ImageMagick-7.1.1-Q16-HDRI\convert.exe'
 #animation.save('animation.gif', writer='imagemagick', fps=30)
 # Display the animation
