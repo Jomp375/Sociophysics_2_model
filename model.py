@@ -6,12 +6,13 @@ from matplotlib.patches import Polygon
 
 
 class Agent:
-    def __init__(self, id, initial_position, initial_velocity, type, ):
+    def __init__(self, id, initial_position, initial_velocity, type,  competitiveness):
         self.id = id
         self.position = initial_position
         self.velocity = initial_velocity
         self.type = type
-        self.competitiveness = None  # Example of additional variable
+        self.competitiveness = competitiveness  # Example of additional variable
+        self.max_velocity = np.random.rand(1) + self.competitiveness
 
     def calculate_force(self, other_agent, door_location, stairs_location):
         total_force = np.zeros(2)
@@ -70,7 +71,13 @@ class Agent:
         self.velocity = velocity
         pass
 
+    def getmaxvelocity(self):
+        return self.max_velocity
+        pass
 
+    def getcompetitiveness(self):
+        return self.competitiveness
+        pass
 # Set the size of the area
 area_size = 20  # in meters
 
@@ -83,9 +90,9 @@ red_circle_radius = 1.5
 # Set the radius of the circle around each agent
 
 
-interaction_force = 0.12
-constant_force_magnitude = 0.07
-damping_coefficient = 0.4  # Damping coefficient for realistic damping force
+interaction_force = 0.10
+constant_force_magnitude = 0.03
+damping_coefficient = 0.5  # Damping coefficient for realistic damping force
 dangerzone_force = 0.10
 # Set the location of the train door
 door_location = np.array([area_size / 2, area_size])
@@ -106,7 +113,7 @@ start_leaving = 100
 start_entering = 150
 time_step = 1
 
-max_velocity = 1
+
 
 # Additional force for people standing between y=18 and y=20
 
@@ -116,7 +123,7 @@ red_door_force_magnitude = 0.1
 # Function to ensure agents are at least initial_distance_agents meters apart from each other
 # Assuming you have 'num_agents' as the number of agents
 blue_indices = [i for i in range(num_blue_agents)]
-blue_agents = [Agent(i, np.random.rand(2) * area_size, (np.random.rand(2) * 2 - 1) * initial_velocity, 'Blue') for i in
+blue_agents = [Agent(i, np.random.rand(2) * area_size, (np.random.rand(2) * 2 - 1) * initial_velocity, 'Blue', (np.random.rand(1)) + 1) for i in
                blue_indices]
 
 red_indices = [i for i in range(num_red_agents)]
@@ -127,7 +134,7 @@ for i in range(num_red_agents):
     red_positions.append([x_position, y_position])
 
 # Create red agents with initial positions meeting the criteria
-red_agents = [Agent(i, np.array(red_positions[i]), np.array([0, 0]), 'Red') for i in red_indices]
+red_agents = [Agent(i, np.array(red_positions[i]), np.array([0, 0]), 'Red',3) for i in red_indices]
 
 # Create a DataFrame to store the information
 columns = ['ID', 'Time', 'X Position', 'Y Position', 'X Velocity', 'Y Velocity', 'X Force', 'Y Force', 'Type']
@@ -163,7 +170,7 @@ for timestamp in range(num_timestamps):
             distance_to_door = np.linalg.norm(current_agent.getposition() - door_location)
             if distance_to_door >= constant_force_distance:
                 force_direction_to_door = (door_location - current_agent.getposition()) / distance_to_door
-                total_force_components += constant_force_magnitude * force_direction_to_door
+                total_force_components += constant_force_magnitude * force_direction_to_door*current_agent.getcompetitiveness()
 
             # Additional force for people standing higher than y=18
             if dangerzoney <= current_agent.getposition()[1]:
@@ -172,7 +179,7 @@ for timestamp in range(num_timestamps):
                     total_force_components[1] -= dangerzone_force * (current_agent.getposition()[1] - dangerzoney)
 
             # Force to prevent blocking the train door
-            if timestamp < start_entering and door_location[1]-3*door_width <= current_agent.getposition()[1]:
+            if timestamp < start_entering and door_location[1]-2*door_width <= current_agent.getposition()[1]:
                 if door_location[0]-2*door_width/3 <= current_agent.getposition()[0] <= door_location[0]:
                     door_force = door_force_magnitude * (current_agent.getposition()[0] - (door_location[0] - 2 * door_width / 3)) / 2
                     total_force_components[0] -= door_force
@@ -186,13 +193,13 @@ for timestamp in range(num_timestamps):
                 # Force for going towards the stairs
                 distance_to_stairs = np.linalg.norm(current_agent.getposition() - stairs_location)
                 force_direction_to_stairs = (stairs_location - current_agent.getposition()) / distance_to_stairs
-                total_force_components += constant_force_magnitude * force_direction_to_stairs
+                total_force_components += 2*constant_force_magnitude * force_direction_to_stairs
             else:
                 distance_to_door = np.linalg.norm(current_agent.getposition() - door_location)
                 # Force to go stand in front of the train door
                 if distance_to_door > 0.8:
                     force_direction_to_door = (door_location - current_agent.getposition()) / distance_to_door
-                    total_force_components += 2*constant_force_magnitude * force_direction_to_door
+                    total_force_components += 3*constant_force_magnitude * force_direction_to_door
             # Force to go through the train door
             if door_location[1]-door_width <= current_agent.getposition()[1]:
                 if current_agent.getposition()[0] <= door_location[0]:
@@ -209,8 +216,8 @@ for timestamp in range(num_timestamps):
         # resistance force to prevent large velocities
         resistance_force = -damping_coefficient * current_agent.getvelocity()
         agent_speed = np.linalg.norm(current_agent.getvelocity())
-        if agent_speed > max_velocity:
-            resistance_force *= agent_speed / max_velocity
+        if agent_speed > current_agent.getmaxvelocity():
+            resistance_force *= agent_speed / current_agent.getmaxvelocity()
         total_force_components += resistance_force
 
         # Introduce opposing force when net force magnitude is less than 0.5
