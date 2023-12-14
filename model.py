@@ -96,7 +96,7 @@ constant_force_magnitude = 0.05
 damping_coefficient = 0.5  # Damping coefficient for realistic damping force
 dangerzone_force = 0.10
 # Set the location of the train door
-door_location = np.array([area_size_x / 2, area_size_y])
+door_location = np.array([area_size_x * 1/2, area_size_y])
 stairs_location = np.array([0,area_size_y / 2])
 door_width = 2
 # Set the distance for the constant force towards the train door
@@ -285,8 +285,8 @@ def update(frame):
 
     # Draw the train door box
     door_vertices = np.array(
-        [(area_size_x / 2 - door_width/2, area_size_y - 1), (area_size_x / 2 + door_width/2, area_size_y - 1), (area_size_x / 2 + door_width/2, area_size_y),
-         (area_size_x / 2 - door_width/2, area_size_y)])
+[(door_location[0] - door_width/2, door_location[1] + 0.5), (door_location[0] + door_width/2, door_location[1]+0.5)
+ , (door_location[0] + door_width/2, door_location[1] - 0.5), (door_location[0] - door_width/2, door_location[1]-0.5)])
     door_box = Polygon(door_vertices, edgecolor='blue', facecolor='none')
     plt.gca().add_patch(door_box)
 
