@@ -137,14 +137,12 @@ for i in range(num_red_agents):
 red_agents = [Agent(i, np.array(red_positions[i]), np.array([0, 0]), 'Red',3) for i in red_indices]
 
 # Create a DataFrame to store the information
-columns = ['ID', 'Time', 'X Position', 'Y Position', 'X Velocity', 'Y Velocity', 'X Force', 'Y Force', 'Type']
+columns = ['ID', 'Time', 'X Position', 'Y Position', 'X Velocity', 'Y Velocity', 'X Force', 'Y Force', 'Type','Competitiveness']
 agent_data_animatie = pd.DataFrame(columns=columns)
 
 # Main simulation loop
 for timestamp in range(num_timestamps):
-    timestamp_agent_data = pd.DataFrame(columns=['ID', 'Time', 'X Position', 'Y Position',
-                                                 'X Velocity', 'Y Velocity', 'X Force',
-                                                 'Y Force', 'Type'])
+    timestamp_agent_data = pd.DataFrame(columns=columns)
     if timestamp < start_entering:
         constant_force_distance = 2.4  # Use the original value before time 150
     else:
@@ -245,7 +243,8 @@ for timestamp in range(num_timestamps):
             'Y Velocity': current_agent.getvelocity()[1],
             'X Force': total_force_components[0],
             'Y Force': total_force_components[1],
-            'Type': current_agent.gettype()
+            'Type': current_agent.gettype(),
+            'Competitiveness':current_agent.getcompetitiveness()
         }, index=blue_indices)
 
         timestamp_agent_data = pd.concat([timestamp_agent_specific_data, timestamp_agent_data], ignore_index=True)
@@ -280,7 +279,6 @@ def update(frame):
     plt.ylabel('Y Position')
     plt.title(f'Time = {frame}')
     plt.grid(True)
-
 # Set up the figure and axis
 fig, ax = plt.subplots()
 
