@@ -26,7 +26,7 @@ class Agent:
         distance_to_door_agent_j = np.linalg.norm(other_agent.getposition() - door_location)
         distance_to_stairs_agent_i = np.linalg.norm(self.position - stairs_location)
         distance_to_stairs_agent_j = np.linalg.norm(other_agent.getposition() - stairs_location)
-        if self.type == 'Blue' and distance_to_door_agent_i > distance_to_door_agent_j and distance < circle_radius:
+        if self.type == 'Blue' and distance_to_door_agent_i > distance_to_door_agent_j and distance < (circle_radius - (self.competitiveness-1)):
             force_magnitude = interaction_force * np.square((1 - distance / circle_radius))
         elif (self.type == 'Red' and distance_to_stairs_agent_i > distance_to_stairs_agent_j and
               distance < red_circle_radius):
@@ -91,7 +91,7 @@ red_circle_radius = 1.5
 
 
 interaction_force = 0.10
-constant_force_magnitude = 0.03
+constant_force_magnitude = 0.05
 damping_coefficient = 0.5  # Damping coefficient for realistic damping force
 dangerzone_force = 0.10
 # Set the location of the train door
@@ -257,13 +257,30 @@ def update(frame):
 
     # Plot agents
     agent_data_frame = agent_data_animatie[agent_data_animatie['Time'] == frame]
-    plt.scatter(agent_data_frame['X Position'], agent_data_frame['Y Position'], label='Agent Positions',marker='o',color=agent_data_frame['Type'], s=area_size)
+
+    # Define a colormap based on competitiveness
+    cmap = plt.cm.get_cmap('viridis')  # You can change the colormap here
+    competitiveness_values = agent_data_frame['Competitiveness']
+    norm = plt.Normalize(competitiveness_values.min(), competitiveness_values.max())
+
+    # Plot agents with colors based on competitiveness
+    plt.scatter(
+        agent_data_frame['X Position'],
+        agent_data_frame['Y Position'],
+        label='Agent Positions',
+        marker='o',
+        c=competitiveness_values,
+        cmap=cmap,
+        norm=norm,
+        s=area_size
+    )
+    plt.colorbar(label='Competitiveness')  # Add a colorbar
 
     # Add a marker as a train door
-    plt.scatter(door_location[0],door_location[1], marker='o', color='orange', s=200, label='Train Door')
+    plt.scatter(door_location[0], door_location[1], marker='o', color='orange', s=200, label='Train Door')
 
     # Add a marker as the stairs
-    plt.scatter(stairs_location[0],stairs_location[1], marker='s', color='Black', s=200, label='Stairs')
+    plt.scatter(stairs_location[0], stairs_location[1], marker='s', color='black', s=200, label='Stairs')
 
     # Draw the train door box
     door_vertices = np.array(
@@ -272,13 +289,15 @@ def update(frame):
     door_box = Polygon(door_vertices, edgecolor='blue', facecolor='none')
     plt.gca().add_patch(door_box)
 
-    # Set labels and show the plot
+    # Set fixed axes limits
     plt.xlim(0, area_size)
     plt.ylim(0, area_size + 1)
     plt.xlabel('X Position')
     plt.ylabel('Y Position')
     plt.title(f'Time = {frame}')
     plt.grid(True)
+
+
 # Set up the figure and axis
 fig, ax = plt.subplots()
 
@@ -287,7 +306,15 @@ unique_times = agent_data_animatie['Time'].unique()
 
 # Create the animation
 animation = FuncAnimation(fig, update, frames=unique_times, interval=50, repeat=True)
-#animation.convert_path: 'C:\Program Files\ImageMagick-7.1.1-Q16-HDRI\convert.exe'
-#animation.save('animation.gif', writer='imagemagick', fps=30)
+
+# Display the animation
+plt.show()
+
+# Get unique time values from the DataFrame
+unique_times = agent_data_animatie['Time'].unique()
+
+# Create the animation
+animation = FuncAnimation(fig, update, frames=unique_times, interval=50, repeat=True)
+
 # Display the animation
 plt.show()
