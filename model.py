@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib import cm
 from matplotlib.animation import FuncAnimation
 from matplotlib.patches import Polygon
 
@@ -79,9 +80,9 @@ class Agent:
         return self.competitiveness
         pass
 # Set the size of the area
-area_size = 20  # in meters
-
-dangerzoney = area_size - 2
+area_size_x = 30  # in meters
+area_size_y = 20
+dangerzoney = area_size_y - 2
 # Set the number of agents
 num_blue_agents = 20
 num_red_agents = 10
@@ -95,8 +96,8 @@ constant_force_magnitude = 0.05
 damping_coefficient = 0.5  # Damping coefficient for realistic damping force
 dangerzone_force = 0.10
 # Set the location of the train door
-door_location = np.array([area_size / 2, area_size])
-stairs_location = np.array([0,area_size / 2])
+door_location = np.array([area_size_x / 2, area_size_y])
+stairs_location = np.array([0,area_size_y / 2])
 door_width = 2
 # Set the distance for the constant force towards the train door
 constant_force_distance = 2.0
@@ -123,14 +124,14 @@ red_door_force_magnitude = 0.1
 # Function to ensure agents are at least initial_distance_agents meters apart from each other
 # Assuming you have 'num_agents' as the number of agents
 blue_indices = [i for i in range(num_blue_agents)]
-blue_agents = [Agent(i, np.random.rand(2) * area_size, (np.random.rand(2) * 2 - 1) * initial_velocity, 'Blue', (np.random.rand(1)) + 1) for i in
+blue_agents = [Agent(i, np.array([np.random.uniform(0, area_size_x), np.random.uniform(0, area_size_y)]), (np.random.rand(2) * 2 - 1) * initial_velocity, 'Blue', (np.random.rand(1)) + 1) for i in
                blue_indices]
 
 red_indices = [i for i in range(num_red_agents)]
 red_positions = []
 for i in range(num_red_agents):
     x_position = np.random.uniform(door_location[0] - door_width/2, door_location[0] + door_width/2)
-    y_position = np.random.uniform(area_size+0.5, area_size +3)
+    y_position = np.random.uniform(area_size_y+0.5, area_size_y +3)
     red_positions.append([x_position, y_position])
 
 # Create red agents with initial positions meeting the criteria
@@ -199,7 +200,7 @@ for timestamp in range(num_timestamps):
                     force_direction_to_door = (door_location - current_agent.getposition()) / distance_to_door
                     total_force_components += 3*constant_force_magnitude * force_direction_to_door
             # Force to go through the train door
-            if door_location[1]-door_width <= current_agent.getposition()[1]:
+            if door_location[1]-2*door_width <= current_agent.getposition()[1]:
                 if current_agent.getposition()[0] <= door_location[0]:
                     door_force = 2*red_door_force_magnitude * (-current_agent.getposition()[0] + door_location[0])
                     total_force_components[0] += door_force
@@ -227,7 +228,7 @@ for timestamp in range(num_timestamps):
             total_force_components += opposing_force
 
         # Reset forces and set velocities for agents above area_size after time 150
-        if timestamp >= start_entering and current_agent.getposition()[1] > area_size and current_agent.gettype()== 'Blue':
+        if timestamp >= start_entering and current_agent.getposition()[1] > area_size_y and current_agent.gettype()== 'Blue':
             total_force_components = np.zeros(2)  # Reset forces
             current_agent.setvelocity(np.array([0.0, 0.2]))  # Set the desired velocity
         # Update positions, velocities, and forces for each agent
@@ -259,7 +260,7 @@ def update(frame):
     agent_data_frame = agent_data_animatie[agent_data_animatie['Time'] == frame]
 
     # Define a colormap based on competitiveness
-    cmap = plt.cm.get_cmap('viridis')  # You can change the colormap here
+    cmap = cm.get_cmap('viridis')  # You can change the colormap here
     competitiveness_values = agent_data_frame['Competitiveness']
     norm = plt.Normalize(competitiveness_values.min(), competitiveness_values.max())
 
@@ -272,7 +273,7 @@ def update(frame):
         c=competitiveness_values,
         cmap=cmap,
         norm=norm,
-        s=area_size
+        s=area_size_y
     )
     plt.colorbar(label='Competitiveness')  # Add a colorbar
 
@@ -284,14 +285,14 @@ def update(frame):
 
     # Draw the train door box
     door_vertices = np.array(
-        [(area_size / 2 - 1, area_size - 1), (area_size / 2 + 1, area_size - 1), (area_size / 2 + 1, area_size),
-         (area_size / 2 - 1, area_size)])
+        [(area_size_x / 2 - door_width/2, area_size_y - 1), (area_size_x / 2 + door_width/2, area_size_y - 1), (area_size_x / 2 + door_width/2, area_size_y),
+         (area_size_x / 2 - door_width/2, area_size_y)])
     door_box = Polygon(door_vertices, edgecolor='blue', facecolor='none')
     plt.gca().add_patch(door_box)
 
     # Set fixed axes limits
-    plt.xlim(0, area_size)
-    plt.ylim(0, area_size + 1)
+    plt.xlim(0, area_size_x)
+    plt.ylim(0, area_size_y + 1)
     plt.xlabel('X Position')
     plt.ylabel('Y Position')
     plt.title(f'Time = {frame}')
@@ -300,15 +301,6 @@ def update(frame):
 
 # Set up the figure and axis
 fig, ax = plt.subplots()
-
-# Get unique time values from the DataFrame
-unique_times = agent_data_animatie['Time'].unique()
-
-# Create the animation
-animation = FuncAnimation(fig, update, frames=unique_times, interval=50, repeat=True)
-
-# Display the animation
-plt.show()
 
 # Get unique time values from the DataFrame
 unique_times = agent_data_animatie['Time'].unique()
