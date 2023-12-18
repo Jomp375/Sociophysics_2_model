@@ -2,7 +2,7 @@ import numpy as np
 
 
 class Agent:
-    def __init__(self, id, initial_position, initial_velocity, type,  competitiveness):
+    def __init__(self, id, initial_position, initial_velocity, type, competitiveness):
         self.id = id
         self.position = initial_position
         self.velocity = initial_velocity
@@ -11,7 +11,7 @@ class Agent:
         self.max_velocity = np.random.rand(1) + self.competitiveness
         self.frustration = None
 
-    def calculate_force(self, other_agent, door_location, stairs_location, circle_radius=None):
+    def calculate_force(self, other_agent, door_location, stairs_location):
         interaction_force = 0.10
         circle_radius = 2.5
         red_circle_radius = 1.5
@@ -26,24 +26,24 @@ class Agent:
         distance_to_door_agent_j = np.linalg.norm(other_agent.getposition() - door_location)
         distance_to_stairs_agent_i = np.linalg.norm(self.position - stairs_location)
         distance_to_stairs_agent_j = np.linalg.norm(other_agent.getposition() - stairs_location)
-        if self.type == 'Blue' and distance_to_door_agent_i > distance_to_door_agent_j and distance < (circle_radius - (self.competitiveness-1)):
+        if (self.type == 'Blue' and distance_to_door_agent_i > distance_to_door_agent_j and
+                distance < (circle_radius - (self.competitiveness-1)-self.frustration)):
             force_magnitude = interaction_force * np.square((1 - distance / circle_radius))
         elif (self.type == 'Red' and distance_to_stairs_agent_i > distance_to_stairs_agent_j and
-              distance < red_circle_radius):
+              distance < (red_circle_radius - self.frustration)):
             force_magnitude = interaction_force * np.square((1 - distance / red_circle_radius))
             # Calculate force direction (away from the agent providing the force)
         force_direction = -distance_vector / distance
 
         # Accumulate force components
         total_force += force_magnitude * force_direction
-        return total_force  # Convert if necessary
+        return total_force
         pass
 
     def update_position(self, timestep):
         # Implement method to update agent's position
         self.position += timestep * self.velocity
         pass
-
 
     def update_velocity(self, timestep, total_force):
         # Convert self.velocity to float64 if it's of integer type
@@ -78,4 +78,8 @@ class Agent:
 
     def getcompetitiveness(self):
         return self.competitiveness
+        pass
+
+    def getfrustration(self):
+        return self.frustration
         pass

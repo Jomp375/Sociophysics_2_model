@@ -9,7 +9,7 @@ from Agent import Agent
 
 area_size_x = 30  # in meters
 area_size_y = 20
-dangerzoney = area_size_y - 2
+dangerzone_y = area_size_y - 2
 # Set the number of agents
 num_blue_agents = 20
 num_red_agents = 10
@@ -62,8 +62,9 @@ for i in range(num_red_agents):
 red_agents = [Agent(i, np.array(red_positions[i]), np.array([0, 0]), 'Red',3) for i in red_indices]
 
 # Create a DataFrame to store the information
-columns = ['ID', 'Time', 'X Position', 'Y Position', 'X Velocity', 'Y Velocity', 'X Force', 'Y Force', 'Type','Competitiveness']
-agent_data_animatie = pd.DataFrame(columns=columns)
+columns = ['ID', 'Time', 'X Position', 'Y Position', 'X Velocity',
+           'Y Velocity', 'X Force', 'Y Force', 'Type','Competitiveness']
+agent_data_animation = pd.DataFrame(columns=columns)
 
 # Main simulation loop
 for timestamp in range(num_timestamps):
@@ -96,10 +97,10 @@ for timestamp in range(num_timestamps):
                 total_force_components += constant_force_magnitude * force_direction_to_door*current_agent.getcompetitiveness()
 
             # Additional force for people standing higher than y=18
-            if dangerzoney <= current_agent.getposition()[1]:
+            if dangerzone_y <= current_agent.getposition()[1]:
                 if timestamp < start_entering or (
                         timestamp >= start_entering and (current_agent.getposition()[0] <= door_location[0] - door_width / 2 or door_location[0] + door_width / 2 <= current_agent.getposition()[0])):
-                    total_force_components[1] -= dangerzone_force * (current_agent.getposition()[1] - dangerzoney)
+                    total_force_components[1] -= dangerzone_force * (current_agent.getposition()[1] - dangerzone_y)
 
             # Force to prevent blocking the train door
             if timestamp < start_entering and door_location[1]-2*door_width <= current_agent.getposition()[1]:
@@ -152,7 +153,7 @@ for timestamp in range(num_timestamps):
             total_force_components += opposing_force
 
         # Reset forces and set velocities for agents above area_size after time 150
-        if timestamp >= start_entering and current_agent.getposition()[1] > area_size_y and current_agent.gettype()== 'Blue':
+        if timestamp >= start_entering and current_agent.getposition()[1] > area_size_y and current_agent.gettype() == 'Blue':
             total_force_components = np.zeros(2)  # Reset forces
             current_agent.setvelocity(np.array([0.0, 0.2]))  # Set the desired velocity
         # Update positions, velocities, and forces for each agent
@@ -174,14 +175,14 @@ for timestamp in range(num_timestamps):
 
         timestamp_agent_data = pd.concat([timestamp_agent_specific_data, timestamp_agent_data], ignore_index=True)
 
-    agent_data_animatie = pd.concat([agent_data_animatie, timestamp_agent_data], ignore_index=True)
+    agent_data_animation = pd.concat([agent_data_animation, timestamp_agent_data], ignore_index=True)
 
 
 def update(frame):
     plt.clf()  # Clear the previous plot
 
     # Plot agents
-    agent_data_frame = agent_data_animatie[agent_data_animatie['Time'] == frame]
+    agent_data_frame = agent_data_animation[agent_data_animation['Time'] == frame]
 
     # Define a colormap based on competitiveness
     cmap = cm.get_cmap('viridis')  # You can change the colormap here
@@ -227,12 +228,12 @@ def update(frame):
 fig, ax = plt.subplots()
 
 # Get unique time values from the DataFrame
-unique_times = agent_data_animatie['Time'].unique()
+unique_times = agent_data_animation['Time'].unique()
 
 # Create the animation
 animation = FuncAnimation(fig, update, frames=unique_times, interval=50, repeat=True)
 # To save the animation using Pillow as a gif
-writer = PillowWriter(fps=15,metadata=dict(artist='Me'),bitrate=1800)
-animation.save('boarding_animation.gif', writer=writer)
+# writer = PillowWriter(fps=15,metadata=dict(artist='Me'),bitrate=1800)
+# animation.save('boarding_animation.gif', writer=writer)
 # Display the animation
 plt.show()
