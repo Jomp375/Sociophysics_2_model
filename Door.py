@@ -16,14 +16,14 @@ class Door:
 
     def update_position(self, timestep):
         self.position = self.position.astype(np.float64)
-        if np.linalg.norm(self.position - self.final_position) < 0.6:
+        if np.linalg.norm(self.position - self.final_position) < 0.3:
             self.position = self.final_position
         else:
             self.position += timestep * self.velocity
 
     def update_velocity(self, timestep):
         self.velocity = self.velocity.astype(np.float64)
-        if np.linalg.norm(self.position - self.final_position) < 0.6:
+        if np.linalg.norm(self.position - self.final_position) < 0.3:
             self.velocity = np.array([0, 0])
         else:
             self.velocity += timestep * self.acceleration

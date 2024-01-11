@@ -24,11 +24,19 @@ danger_zone_force = 0.10
 door_force_magnitude = 0.15
 red_door_force_magnitude = 0.1
 
+# Set the time step, number of timestamps and the constant for updating positions and velocities
+num_timestamps = 300
+start_leaving = 100
+start_entering = 150
+time_step = 1
+arrival_time = 75
+
 # Set the distance for the constant force towards the train door
 constant_force_distance = 2.0
 door_width = 2
+
 # Set the location of the train door
-door = Door(np.array([0, area_size_y]), np.array([1,0]), door_width, np.array([area_size_x * 1/2, area_size_y]), 50)
+door = Door(np.array([0, area_size_y]), np.array([0.7,0]), door_width, np.array([area_size_x * 1/2, area_size_y]), arrival_time)
 stairs_location = np.array([0, area_size_y / 2])
 
 # Set the initial distance between agents
@@ -36,13 +44,6 @@ initial_distance_agents = 1.5  # initial minimal spread
 
 # Set the initial velocity range of agents
 initial_velocity = 0.1
-
-# Set the time step, number of timestamps and the constant for updating positions and velocities
-num_timestamps = 300
-start_leaving = 100
-start_entering = 150
-time_step = 1
-
 
 # Function to ensure agents are at least initial_distance_agents meters apart from each other
 # Assuming you have 'num_agents' as the number of agents
