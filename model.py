@@ -4,7 +4,6 @@ import pandas as pd
 from matplotlib import cm
 from matplotlib.animation import FuncAnimation
 # from matplotlib.animation import PillowWriter
-from matplotlib.patches import Polygon
 from Agent import Agent
 from Door import Door
 
@@ -215,15 +214,6 @@ def update(frame):
 
     # Add a marker as the stairs
     plt.scatter(stairs_location[0], stairs_location[1], marker='s', color='black', s=200, label='Stairs')
-
-    # Draw the train door box
-    # door_vertices = np.array(
-    #     [(door_data_frame['Door X Position'] - door_width / 2, door_data_frame['Door Y Position']),
-    #     (door_data_frame['Door X Position'] + door_width / 2, door_data_frame['Door Y Position']),
-    #     (door_data_frame['Door X Position'] + door_width / 2, door_data_frame['Door Y Position'] - 1),
-    #     (door_data_frame['Door X Position'] - door_width / 2, door_data_frame['Door Y Position'] - 1)])
-    # door_box = Polygon(door_vertices, edgecolor='blue', facecolor='none')
-    # plt.gca().add_patch(door_box)
 
     # Set fixed axes limits
     plt.xlim(0, area_size_x)
