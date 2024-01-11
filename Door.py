@@ -13,6 +13,7 @@ class Door:
         self.acceleration = 2 * np.divide(
             (self.final_position - self.initial_position - self.initial_velocity * self.final_time),
             (self.final_time ** 2))
+        print (self.acceleration)
 
     def update_position(self, timestep):
         self.position = self.position.astype(np.float64)

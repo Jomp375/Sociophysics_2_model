@@ -36,7 +36,7 @@ constant_force_distance = 2.0
 door_width = 2
 
 # Set the location of the train door
-door = Door(np.array([0, area_size_y]), np.array([0.7,0]), door_width, np.array([area_size_x * 1/2, area_size_y]), arrival_time)
+door = Door(np.array([-area_size_x * 1/2, area_size_y]), np.array([1.5,0]), door_width, np.array([area_size_x * 1/2, area_size_y]), arrival_time)
 stairs_location = np.array([0, area_size_y / 2])
 
 # Set the initial distance between agents
