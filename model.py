@@ -3,15 +3,16 @@ import numpy as np
 import pandas as pd
 from matplotlib import cm
 from matplotlib.animation import FuncAnimation
-from matplotlib.animation import PillowWriter
+# from matplotlib.animation import PillowWriter
 from matplotlib.patches import Polygon
 from Agent import Agent
+from Door import Door
 
-area_size_x = 30  # in meters
+area_size_x = 50  # in meters
 area_size_y = 20
-dangerzone_y = area_size_y - 2
+danger_zone_y = area_size_y - 2
 # Set the number of agents
-num_blue_agents = 20
+num_blue_agents = 40
 num_red_agents = 10
 # Set the radius of the circle around each agent
 
@@ -19,18 +20,16 @@ num_red_agents = 10
 interaction_force = 0.10
 constant_force_magnitude = 0.05
 damping_coefficient = 0.5  # Damping coefficient for realistic damping force
-dangerzone_force = 0.10
+danger_zone_force = 0.10
 door_force_magnitude = 0.15
 red_door_force_magnitude = 0.1
 
 # Set the distance for the constant force towards the train door
 constant_force_distance = 2.0
-
-# Set the location of the train door
-door_location = np.array([area_size_x * 1/2, area_size_y])
-stairs_location = np.array([0,area_size_y / 2])
 door_width = 2
-
+# Set the location of the train door
+door = Door(np.array([0, area_size_y]), np.array([1,0]), door_width, np.array([area_size_x * 1/2, area_size_y]), 50)
+stairs_location = np.array([0, area_size_y / 2])
 
 # Set the initial distance between agents
 initial_distance_agents = 1.5  # initial minimal spread
@@ -54,8 +53,8 @@ blue_agents = [Agent(i, np.array([np.random.uniform(0, area_size_x), np.random.u
 red_indices = [i for i in range(num_red_agents)]
 red_positions = []
 for i in range(num_red_agents):
-    x_position = np.random.uniform(door_location[0] - door_width/2, door_location[0] + door_width/2)
-    y_position = np.random.uniform(area_size_y+0.5, area_size_y +3)
+    x_position = np.random.uniform(door.getposition()[0] - door_width / 2, door.getposition()[0] + door_width / 2)
+    y_position = np.random.uniform(area_size_y+0.5, area_size_y + 3)
     red_positions.append([x_position, y_position])
 
 # Create red agents with initial positions meeting the criteria
@@ -63,8 +62,9 @@ red_agents = [Agent(i, np.array(red_positions[i]), np.array([0, 0]), 'Red',3) fo
 
 # Create a DataFrame to store the information
 columns = ['ID', 'Time', 'X Position', 'Y Position', 'X Velocity',
-           'Y Velocity', 'X Force', 'Y Force', 'Type','Competitiveness']
+           'Y Velocity', 'X Force', 'Y Force', 'Type', 'Competitiveness']
 agent_data_animation = pd.DataFrame(columns=columns)
+door_data_animation = pd.DataFrame(columns = ['Time','Door X Position','Door Y Position'])
 
 # Main simulation loop
 for timestamp in range(num_timestamps):
@@ -88,28 +88,29 @@ for timestamp in range(num_timestamps):
                 else:
                     agent2 = red_agents[j-num_blue_agents]
                 # apply forces with each other
-                total_force_components += current_agent.calculate_force(agent2, door_location, stairs_location)
+                total_force_components += current_agent.calculate_force(agent2, door.getposition(), stairs_location)
         # Constant force towards the train door
         if current_agent.gettype() == 'Blue':
-            distance_to_door = np.linalg.norm(current_agent.getposition() - door_location)
+            distance_to_door = np.linalg.norm(current_agent.getposition() - door.getposition())
             if distance_to_door >= constant_force_distance:
-                force_direction_to_door = (door_location - current_agent.getposition()) / distance_to_door
+                force_direction_to_door = (door.getposition() - current_agent.getposition()) / distance_to_door
                 total_force_components += constant_force_magnitude * force_direction_to_door*current_agent.getcompetitiveness()
 
             # Additional force for people standing higher than y=18
-            if dangerzone_y <= current_agent.getposition()[1]:
+            if danger_zone_y <= current_agent.getposition()[1]:
                 if timestamp < start_entering or (
-                        timestamp >= start_entering and (current_agent.getposition()[0] <= door_location[0] - door_width / 2 or door_location[0] + door_width / 2 <= current_agent.getposition()[0])):
-                    total_force_components[1] -= dangerzone_force * (current_agent.getposition()[1] - dangerzone_y)
+                        timestamp >= start_entering and (current_agent.getposition()[0] <= door.getposition()[0] - door_width / 2 or door.getposition()[0] + door_width / 2 <= current_agent.getposition()[0])):
+                    total_force_components[1] -= danger_zone_force * (current_agent.getposition()[1] - danger_zone_y)
 
             # Force to prevent blocking the train door
-            if timestamp < start_entering and door_location[1]-2*door_width <= current_agent.getposition()[1]:
-                if door_location[0]-2*door_width/3 <= current_agent.getposition()[0] <= door_location[0]:
-                    door_force = door_force_magnitude * (current_agent.getposition()[0] - (door_location[0] - 2 * door_width / 3)) / 2
+            if timestamp < start_entering and door.getposition()[1]-2*door_width <= current_agent.getposition()[1]:
+                if door.getposition()[0]-2*door_width/3 <= current_agent.getposition()[0] <= door.getposition()[0]:
+                    door_force = door_force_magnitude * (current_agent.getposition()[0] - (
+                                door.getposition()[0] - 2 * door_width / 3)) / 2
                     total_force_components[0] -= door_force
 
-                if door_location[0] < current_agent.getposition()[0] <= door_location[0]+2*door_width/3:
-                    door_force = door_force_magnitude * ((door_location[0]+2*door_width/3) - current_agent.getposition()[0]) / 2
+                if door.getposition()[0] < current_agent.getposition()[0] <= door.getposition()[0]+2*door_width/3:
+                    door_force = door_force_magnitude * ((door.getposition()[0] + 2 * door_width / 3) - current_agent.getposition()[0]) / 2
                     total_force_components[0] += door_force
 
         elif current_agent.gettype() == 'Red':
@@ -117,21 +118,21 @@ for timestamp in range(num_timestamps):
                 # Force for going towards the stairs
                 distance_to_stairs = np.linalg.norm(current_agent.getposition() - stairs_location)
                 force_direction_to_stairs = (stairs_location - current_agent.getposition()) / distance_to_stairs
-                total_force_components += 2*constant_force_magnitude * force_direction_to_stairs
+                total_force_components += 5/2*constant_force_magnitude * force_direction_to_stairs
             else:
-                distance_to_door = np.linalg.norm(current_agent.getposition() - door_location)
+                distance_to_door = np.linalg.norm(current_agent.getposition() - door.getposition())
                 # Force to go stand in front of the train door
                 if distance_to_door > 0.8:
-                    force_direction_to_door = (door_location - current_agent.getposition()) / distance_to_door
+                    force_direction_to_door = (door.getposition() - current_agent.getposition()) / distance_to_door
                     total_force_components += 3*constant_force_magnitude * force_direction_to_door
             # Force to go through the train door
-            if door_location[1]-2*door_width <= current_agent.getposition()[1]:
-                if current_agent.getposition()[0] <= door_location[0]:
-                    door_force = 2*red_door_force_magnitude * (-current_agent.getposition()[0] + door_location[0])
+            if door.getposition()[1]-2*door_width <= current_agent.getposition()[1]:
+                if current_agent.getposition()[0] <= door.getposition()[0]:
+                    door_force = 2*red_door_force_magnitude * (-current_agent.getposition()[0] + door.getposition()[0])
                     total_force_components[0] += door_force
 
-                if door_location[0] < current_agent.getposition()[0]:
-                    door_force = 2*red_door_force_magnitude * (door_location[0] - current_agent.getposition()[0])
+                if door.getposition()[0] < current_agent.getposition()[0]:
+                    door_force = 2*red_door_force_magnitude * (door.getposition()[0] - current_agent.getposition()[0])
                     total_force_components[0] += door_force
 
         # Calculate the net force magnitude
@@ -170,11 +171,17 @@ for timestamp in range(num_timestamps):
             'X Force': total_force_components[0],
             'Y Force': total_force_components[1],
             'Type': current_agent.gettype(),
-            'Competitiveness':current_agent.getcompetitiveness()
+            'Competitiveness': current_agent.getcompetitiveness(),
         }, index=blue_indices)
 
         timestamp_agent_data = pd.concat([timestamp_agent_specific_data, timestamp_agent_data], ignore_index=True)
 
+    timestamp_Door_data = pd.DataFrame( {'Time': timestamp + 1,
+                                        'Door X Position': door.getposition()[0],
+                                        'Door Y Position': door.getposition()[1]}, index=np.array([1]))
+    door.update_velocity(time_step)
+    door.update_position(time_step)
+    door_data_animation = pd.concat([door_data_animation,timestamp_Door_data],ignore_index=True)
     agent_data_animation = pd.concat([agent_data_animation, timestamp_agent_data], ignore_index=True)
 
 
@@ -183,7 +190,7 @@ def update(frame):
 
     # Plot agents
     agent_data_frame = agent_data_animation[agent_data_animation['Time'] == frame]
-
+    door_data_frame = door_data_animation[door_data_animation['Time'] == frame]
     # Define a colormap based on competitiveness
     cmap = cm.get_cmap('viridis')  # You can change the colormap here
     competitiveness_values = agent_data_frame['Competitiveness']
@@ -200,20 +207,22 @@ def update(frame):
         norm=norm,
         s=area_size_y
     )
-    plt.colorbar(label='Competitiveness')  # Add a colorbar
+    plt.colorbar(label='Competitiveness')  # Add a color bar
 
     # Add a marker as a train door
-    plt.scatter(door_location[0], door_location[1], marker='o', color='orange', s=200, label='Train Door')
+    plt.scatter(door_data_frame['Door X Position'], door_data_frame['Door Y Position'], marker='o', color='orange', s=200, label='Train Door')
 
     # Add a marker as the stairs
     plt.scatter(stairs_location[0], stairs_location[1], marker='s', color='black', s=200, label='Stairs')
 
     # Draw the train door box
-    door_vertices = np.array(
-[(door_location[0] - door_width/2, door_location[1] + 0.5), (door_location[0] + door_width/2, door_location[1]+0.5)
- , (door_location[0] + door_width/2, door_location[1] - 0.5), (door_location[0] - door_width/2, door_location[1]-0.5)])
-    door_box = Polygon(door_vertices, edgecolor='blue', facecolor='none')
-    plt.gca().add_patch(door_box)
+    # door_vertices = np.array(
+    #     [(door_data_frame['Door X Position'] - door_width / 2, door_data_frame['Door Y Position']),
+    #     (door_data_frame['Door X Position'] + door_width / 2, door_data_frame['Door Y Position']),
+    #     (door_data_frame['Door X Position'] + door_width / 2, door_data_frame['Door Y Position'] - 1),
+    #     (door_data_frame['Door X Position'] - door_width / 2, door_data_frame['Door Y Position'] - 1)])
+    # door_box = Polygon(door_vertices, edgecolor='blue', facecolor='none')
+    # plt.gca().add_patch(door_box)
 
     # Set fixed axes limits
     plt.xlim(0, area_size_x)

@@ -27,10 +27,10 @@ class Agent:
         distance_to_stairs_agent_i = np.linalg.norm(self.position - stairs_location)
         distance_to_stairs_agent_j = np.linalg.norm(other_agent.getposition() - stairs_location)
         if (self.type == 'Blue' and distance_to_door_agent_i > distance_to_door_agent_j and
-                distance < (circle_radius - (self.competitiveness-1)-self.frustration)):
+                distance < (circle_radius - (self.competitiveness-1))):
             force_magnitude = interaction_force * np.square((1 - distance / circle_radius))
         elif (self.type == 'Red' and distance_to_stairs_agent_i > distance_to_stairs_agent_j and
-              distance < (red_circle_radius - self.frustration)):
+              distance < red_circle_radius):
             force_magnitude = interaction_force * np.square((1 - distance / red_circle_radius))
             # Calculate force direction (away from the agent providing the force)
         force_direction = -distance_vector / distance
