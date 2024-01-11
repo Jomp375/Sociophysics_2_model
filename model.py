@@ -14,7 +14,7 @@ danger_zone_y = area_size_y - 2
 num_blue_agents = 40
 num_red_agents = 10
 # Set the radius of the circle around each agent
-
+pole_radius = 1
 # Constants for the forces
 interaction_force = 0.10
 constant_force_magnitude = 0.05
@@ -24,7 +24,7 @@ door_force_magnitude = 0.15
 red_door_force_magnitude = 0.1
 
 # Set the time step, number of timestamps and the constant for updating positions and velocities
-num_timestamps = 300
+num_timestamps = 400
 start_leaving = 100
 start_entering = 150
 time_step = 1
@@ -68,6 +68,7 @@ door_data_animation = pd.DataFrame(columns = ['Time','Door X Position','Door Y P
 
 # Main simulation loop
 for timestamp in range(num_timestamps):
+    Pole_location = np.array(door.getposition()[0],door.getposition()[1]-0.8)
     timestamp_agent_data = pd.DataFrame(columns=columns)
     if timestamp < start_entering:
         constant_force_distance = 2.4  # Use the original value before time 150
@@ -135,6 +136,15 @@ for timestamp in range(num_timestamps):
                     door_force = 2*red_door_force_magnitude * (door.getposition()[0] - current_agent.getposition()[0])
                     total_force_components[0] += door_force
 
+        # Force that prevents people from bumping into the pole
+        vector_to_pole = Pole_location - current_agent.getposition()
+        distance = abs(np.linalg.norm(vector_to_pole))
+        if distance < pole_radius:
+            force_magnitude = interaction_force * np.square((1 - distance / pole_radius))
+        else:
+            force_magnitude = 0
+        force_direction = vector_to_pole / distance
+        total_force_components += force_magnitude * force_direction
         # Calculate the net force magnitude
         net_force_magnitude = np.linalg.norm(total_force_components)
 
@@ -210,8 +220,8 @@ def update(frame):
     plt.colorbar(label='Competitiveness')  # Add a color bar
 
     # Add a marker as a train door
-    plt.scatter(door_data_frame['Door X Position'], door_data_frame['Door Y Position'], marker='o', color='orange', s=200, label='Train Door')
-
+    plt.scatter(door_data_frame['Door X Position'], door_data_frame['Door Y Position'], marker='s', color='orange', s=300, label='Train Door')
+    plt.scatter(door_data_frame['Door X Position'], door_data_frame['Door Y Position']-0.8, marker='o', color='red', s=20, label='pole')
     # Add a marker as the stairs
     plt.scatter(stairs_location[0], stairs_location[1], marker='s', color='black', s=200, label='Stairs')
 
