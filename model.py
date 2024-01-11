@@ -22,7 +22,6 @@ damping_coefficient = 0.5  # Damping coefficient for realistic damping force
 danger_zone_force = 0.10
 door_force_magnitude = 0.15
 red_door_force_magnitude = 0.1
-
 # Set the time step, number of timestamps and the constant for updating positions and velocities
 num_timestamps = 400
 start_leaving = 100
