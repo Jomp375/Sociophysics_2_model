@@ -55,6 +55,8 @@ class Agent:
     def update_frustration(self, timestep):
         if self.frustration < 2 and random.random() < 0.02:
             self.frustration += 0.03 * timestep
+        if self.competitiveness - 0.6 < self.frustration:
+            self.competitiveness += 0.1
         pass
 
     def getid(self):

@@ -11,8 +11,8 @@ area_size_x = 50  # in meters
 area_size_y = 20
 danger_zone_y = area_size_y - 2
 # Set the number of agents
-num_blue_agents = 30
-num_red_agents = 8
+num_blue_agents = 40
+num_red_agents = 10
 # Set the radius of the circle around each agent
 pole_radius = 1
 # Constants for the forces
@@ -50,7 +50,7 @@ initial_velocity = 0.1
 # Assuming you have 'num_agents' as the number of agents
 blue_indices = [i for i in range(num_blue_agents)]
 blue_agents = [Agent(i, np.array([np.random.uniform(0, area_size_x),
-                                  np.random.uniform(area_size_y / 2, area_size_y)]),
+                                  np.random.uniform(area_size_y / 4, danger_zone_y)]),
                      (np.random.rand(2) * 2 - 1) * initial_velocity,
                      'Blue', (np.random.rand(1)) + 1, np.random.uniform(0,0.5)) for i in blue_indices]
 
