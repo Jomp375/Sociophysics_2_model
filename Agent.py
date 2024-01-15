@@ -14,7 +14,7 @@ class Agent:
     def calculate_force(self, other_agent, door_location, stairs_location):
         interaction_force = 0.10
         circle_radius = 2.5
-        red_circle_radius = 1.5
+        red_circle_radius = 1.2
         total_force = np.zeros(2)
         force_magnitude = 0
         # Implement the force calculation method for the agent

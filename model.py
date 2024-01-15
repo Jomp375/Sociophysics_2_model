@@ -27,16 +27,16 @@ red_door_force_magnitude = 0.1
 delay = 0
 num_timestamps = 400
 start_leaving = 135 + delay
-start_entering = 180 + delay
+start_entering = 250 + delay
 time_step = 1
-stopping_time = 125 + delay
-arrival_time = 60 + delay
+stopping_time = 120 + delay
+arrival_time = 100 + delay
 # Set the distance for the constant force towards the train door
-constant_force_distance = 2.0
+constant_force_distance = 2
 door_width = 1.8
 
 # Set the location of the train door
-door = Door(arrival_time, np.array([0, area_size_y]), np.array([area_size_x * 1 / 2, area_size_y]), stopping_time,
+door = Door(arrival_time, np.array([area_size_x * 1 / 4, area_size_y]), np.array([area_size_x * 1 / 2, area_size_y]), stopping_time,
             door_width)
 stairs_location = np.array([0, area_size_y / 2])
 
