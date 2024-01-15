@@ -2,18 +2,25 @@ import numpy as np
 
 
 class Door:
-    def __init__(self, initial_position, initial_velocity, door_width, final_position, final_time):
-        self.initial_position = np.array(initial_position)
-        self.position = np.array(initial_position)
-        self.initial_velocity = np.array(initial_velocity)
-        self.velocity = self.initial_velocity
-        self.door_width = door_width
+    def __init__(self, time_x : int, position_at_time_x, final_position, final_time: int, door_width: float):
         self.final_position = np.array(final_position)
         self.final_time = final_time
+        self.door_width = door_width
+
+        # Calculate initial velocity
+        self.initial_velocity = np.divide((self.final_position - position_at_time_x), (self.final_time - time_x))
+
+        # Calculate initial position
+        self.initial_position = position_at_time_x - time_x * self.initial_velocity
+
+        self.position = np.array(self.initial_position)
+        self.velocity = np.array(self.initial_velocity)
+
+        # Calculate acceleration
         self.acceleration = 2 * np.divide(
             (self.final_position - self.initial_position - self.initial_velocity * self.final_time),
             (self.final_time ** 2))
-        print (self.acceleration)
+        print(self.acceleration)
 
     def update_position(self, timestep):
         self.position = self.position.astype(np.float64)

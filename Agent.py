@@ -2,14 +2,14 @@ import numpy as np
 
 
 class Agent:
-    def __init__(self, id, initial_position, initial_velocity, type, competitiveness):
+    def __init__(self, id: int, initial_position, initial_velocity, type: str, competitiveness: float, frustration: float):
         self.id = id
         self.position = initial_position
         self.velocity = initial_velocity
         self.type = type
         self.competitiveness = competitiveness  # Example of additional variable
         self.max_velocity = np.random.rand(1) + self.competitiveness
-        self.frustration = None
+        self.frustration = frustration
 
     def calculate_force(self, other_agent, door_location, stairs_location):
         interaction_force = 0.10
@@ -27,7 +27,7 @@ class Agent:
         distance_to_stairs_agent_i = np.linalg.norm(self.position - stairs_location)
         distance_to_stairs_agent_j = np.linalg.norm(other_agent.getposition() - stairs_location)
         if (self.type == 'Blue' and distance_to_door_agent_i > distance_to_door_agent_j and
-                distance < (circle_radius - (self.competitiveness-1))):
+                distance < (circle_radius - (self.frustration))):
             force_magnitude = interaction_force * np.square((1 - distance / circle_radius))
         elif (self.type == 'Red' and distance_to_stairs_agent_i > distance_to_stairs_agent_j and
               distance < red_circle_radius):
