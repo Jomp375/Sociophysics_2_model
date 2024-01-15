@@ -1,5 +1,5 @@
 import numpy as np
-
+import random
 
 class Agent:
     def __init__(self, id: int, initial_position, initial_velocity, type: str, competitiveness: float, frustration: float):
@@ -27,10 +27,10 @@ class Agent:
         distance_to_stairs_agent_i = np.linalg.norm(self.position - stairs_location)
         distance_to_stairs_agent_j = np.linalg.norm(other_agent.getposition() - stairs_location)
         if (self.type == 'Blue' and distance_to_door_agent_i > distance_to_door_agent_j and
-                distance < (circle_radius - (self.frustration))):
+                distance < (circle_radius - self.frustration)):
             force_magnitude = interaction_force * np.square((1 - distance / circle_radius))
         elif (self.type == 'Red' and distance_to_stairs_agent_i > distance_to_stairs_agent_j and
-              distance < red_circle_radius):
+              distance < (red_circle_radius - self.frustration)):
             force_magnitude = interaction_force * np.square((1 - distance / red_circle_radius))
             # Calculate force direction (away from the agent providing the force)
         force_direction = -distance_vector / distance
@@ -50,6 +50,11 @@ class Agent:
         self.velocity = self.velocity.astype(np.float64)
         # Implement method to update agent's velocity based on total force
         self.velocity += timestep * total_force
+        pass
+
+    def update_frustration(self, timestep):
+        if self.frustration < 2 and random.random() < 0.02:
+            self.frustration += 0.03 * timestep
         pass
 
     def getid(self):

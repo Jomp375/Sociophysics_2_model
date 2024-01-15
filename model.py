@@ -11,7 +11,7 @@ area_size_x = 50  # in meters
 area_size_y = 20
 danger_zone_y = area_size_y - 2
 # Set the number of agents
-num_blue_agents = 40
+num_blue_agents = 30
 num_red_agents = 8
 # Set the radius of the circle around each agent
 pole_radius = 1
@@ -33,7 +33,7 @@ stopping_time = 125 + delay
 arrival_time = 60 + delay
 # Set the distance for the constant force towards the train door
 constant_force_distance = 2.0
-door_width = 2
+door_width = 1.8
 
 # Set the location of the train door
 door = Door(arrival_time, np.array([0, area_size_y]), np.array([area_size_x * 1 / 2, area_size_y]), stopping_time,
@@ -52,7 +52,7 @@ blue_indices = [i for i in range(num_blue_agents)]
 blue_agents = [Agent(i, np.array([np.random.uniform(0, area_size_x),
                                   np.random.uniform(area_size_y / 2, area_size_y)]),
                      (np.random.rand(2) * 2 - 1) * initial_velocity,
-                     'Blue', (np.random.rand(1)) + 1, np.random.uniform(1)) for i in blue_indices]
+                     'Blue', (np.random.rand(1)) + 1, np.random.uniform(0,0.5)) for i in blue_indices]
 
 red_indices = [i for i in range(num_red_agents)]
 red_positions = []
@@ -62,11 +62,11 @@ for i in range(num_red_agents):
     red_positions.append([x_position, y_position])
 
 # Create red agents with initial positions meeting the criteria
-red_agents = [Agent(i, np.array(red_positions[i]), np.array([0, 0]), 'Red', 3) for i in red_indices]
+red_agents = [Agent(i, np.array(red_positions[i]), np.array([0, 0]), 'Red', 3, 0) for i in red_indices]
 
 # Create a DataFrame to store the information
 columns = ['ID', 'Time', 'X Position', 'Y Position', 'X Velocity',
-           'Y Velocity', 'X Force', 'Y Force', 'Type', 'Competitiveness']
+           'Y Velocity', 'X Force', 'Y Force', 'Type', 'Competitiveness', 'Frustration']
 agent_data_animation = pd.DataFrame(columns=columns)
 door_data_animation = pd.DataFrame(columns=['Time', 'Door X Position', 'Door Y Position'])
 
@@ -108,39 +108,44 @@ for timestamp in range(num_timestamps):
                 if timestamp < start_entering or (
                         timestamp >= start_entering and (
                         current_agent.getposition()[0] <= door.getposition()[0] - door_width / 2 or door.getposition()[
-                    0] + door_width / 2 <= current_agent.getposition()[0])):
+                        0] + door_width / 2 <= current_agent.getposition()[0])):
                     total_force_components[1] -= danger_zone_force * (current_agent.getposition()[1] - danger_zone_y)
 
             # Force to prevent blocking the train door
-            if timestamp < start_entering and door.getposition()[1] - 2 * door_width <= current_agent.getposition()[1]:
+            if (stopping_time < timestamp < start_entering
+                    and door.getposition()[1] - 2 * door_width <= current_agent.getposition()[1]):
                 if door.getposition()[0] - 2 * door_width / 3 <= current_agent.getposition()[0] <= door.getposition()[
-                    0]:
+                        0]:
                     door_force = door_force_magnitude * (current_agent.getposition()[0] - (
                             door.getposition()[0] - 2 * door_width / 3)) / 2
                     total_force_components[0] -= door_force
 
                 if door.getposition()[0] < current_agent.getposition()[0] <= door.getposition()[0] + 2 * door_width / 3:
                     door_force = door_force_magnitude * (
-                                (door.getposition()[0] + 2 * door_width / 3) - current_agent.getposition()[0]) / 2
+                            (door.getposition()[0] + 2 * door_width / 3) - current_agent.getposition()[0]) / 2
                     total_force_components[0] += door_force
 
         elif current_agent.gettype() == 'Red':
             if timestamp > start_leaving:
-                # Force for going towards the stairs
-                distance_to_stairs = np.linalg.norm(current_agent.getposition() - stairs_location)
-                force_direction_to_stairs = (stairs_location - current_agent.getposition()) / distance_to_stairs
-                total_force_components += 5 / 2 * constant_force_door_magnitude * force_direction_to_stairs
+                if current_agent.getposition()[1] < door.getposition()[1] - 1.8 * door_width:
+                    # Force for going towards the stairs
+                    distance_to_stairs = np.linalg.norm(current_agent.getposition() - stairs_location)
+                    force_direction_to_stairs = (stairs_location - current_agent.getposition()) / distance_to_stairs
+                    total_force_components += 5 / 2 * constant_force_door_magnitude * force_direction_to_stairs
+                else:
+                    total_force_components += np.array([0,-constant_force_up_magnitude])
             else:
                 distance_to_door = np.linalg.norm(current_agent.getposition() - door.getposition())
                 # Force to go stand in front of the train door
                 if distance_to_door > 0.8:
                     force_direction_to_door = (door.getposition() - current_agent.getposition()) / distance_to_door
                     total_force_components += 3 * constant_force_door_magnitude * force_direction_to_door
+
             # Force to go through the train door
             if door.getposition()[1] - 2 * door_width <= current_agent.getposition()[1]:
                 if current_agent.getposition()[0] <= door.getposition()[0]:
                     door_force = 2 * red_door_force_magnitude * (
-                                -current_agent.getposition()[0] + door.getposition()[0])
+                            -current_agent.getposition()[0] + door.getposition()[0])
                     total_force_components[0] += door_force
 
                 if door.getposition()[0] < current_agent.getposition()[0]:
@@ -184,6 +189,7 @@ for timestamp in range(num_timestamps):
         # Update positions, velocities, and forces for each agent
         current_agent.update_position(time_step)
         current_agent.update_velocity(time_step, total_force_components)
+        current_agent.update_frustration(time_step)
         # Store the information for each agent at the current timestamp
         timestamp_agent_specific_data = pd.DataFrame({
             'ID': current_agent.getid(),
@@ -196,7 +202,8 @@ for timestamp in range(num_timestamps):
             'Y Force': total_force_components[1],
             'Type': current_agent.gettype(),
             'Competitiveness': current_agent.getcompetitiveness(),
-        }, index=blue_indices)
+            'Frustration': current_agent.getfrustration()
+        }, index=[current_agent.getid])
 
         timestamp_agent_data = pd.concat([timestamp_agent_specific_data, timestamp_agent_data], ignore_index=True)
 
@@ -217,7 +224,7 @@ def update(frame):
     door_data_frame = door_data_animation[door_data_animation['Time'] == frame]
     # Define a colormap based on competitiveness
     cmap = cm.get_cmap('viridis')  # You can change the colormap here
-    competitiveness_values = agent_data_frame['Competitiveness']
+    competitiveness_values = agent_data_frame['Frustration']
     norm = plt.Normalize(competitiveness_values.min(), competitiveness_values.max())
 
     # Plot agents with colors based on competitiveness
@@ -231,13 +238,13 @@ def update(frame):
         norm=norm,
         s=area_size_y
     )
-    plt.colorbar(label='Competitiveness')  # Add a color bar
+    plt.colorbar(label='Frustration')  # Add a color bar
 
     # Add a marker as a train door
     plt.scatter(door_data_frame['Door X Position'], door_data_frame['Door Y Position'], marker='s', color='orange',
                 s=300, label='Train Door')
-    plt.scatter(door_data_frame['Door X Position'], door_data_frame['Door Y Position'] - 0.8, marker='o', color='red',
-                s=20, label='pole')
+    # plt.scatter(door_data_frame['Door X Position'], door_data_frame['Door Y Position'] - 0.8, marker='o', color='red',
+    #             s=20, label='pole')
     # Add a marker as the stairs
     plt.scatter(stairs_location[0], stairs_location[1], marker='s', color='black', s=200, label='Stairs')
 
