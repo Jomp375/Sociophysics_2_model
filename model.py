@@ -25,7 +25,7 @@ door_force_magnitude = 0.15
 red_door_force_magnitude = 0.1
 # Set the time step, number of timestamps and the constant for updating positions and velocities
 delay = 0
-num_timestamps = 400
+num_timestamps = 400 + delay
 start_leaving = 135 + delay
 start_entering = 250 + delay
 time_step = 1
@@ -224,7 +224,7 @@ def update(frame):
     door_data_frame = door_data_animation[door_data_animation['Time'] == frame]
     # Define a colormap based on competitiveness
     cmap = cm.get_cmap('viridis')  # You can change the colormap here
-    competitiveness_values = agent_data_frame['Frustration']
+    competitiveness_values = agent_data_frame['Competitiveness']
     norm = plt.Normalize(competitiveness_values.min(), competitiveness_values.max())
 
     # Plot agents with colors based on competitiveness
@@ -238,7 +238,7 @@ def update(frame):
         norm=norm,
         s=area_size_y
     )
-    plt.colorbar(label='Frustration')  # Add a color bar
+    plt.colorbar(label='Competitiveness')  # Add a color bar
 
     # Add a marker as a train door
     plt.scatter(door_data_frame['Door X Position'], door_data_frame['Door Y Position'], marker='s', color='orange',
