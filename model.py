@@ -7,9 +7,6 @@ from matplotlib.animation import FuncAnimation
 from Agent import Agent
 from Door import Door
 
-pd.set_option('display.max_rows', None)
-pd.set_option('display.max_columns', None)
-
 area_size_x = 50  # in meters
 area_size_y = 20
 danger_zone_y = area_size_y - 2
@@ -60,7 +57,7 @@ for i in range(num_red_agents):
 red_agents = [Agent(i, np.array(red_positions[i]), np.array([0, 0]), 'Red', 3, 0) for i in red_indices]
 
 
-def simulation (Blue_agents, Red_agents, Door:Door, timestep:int):
+def simulation(Blue_agents, Red_agents, train_door: Door, timestep: int):
     constant_force_door_magnitude = 0.05
     constant_force_up_magnitude = 0.03
     damping_coefficient = 0.5  # Damping coefficient for realistic damping force
@@ -76,7 +73,7 @@ def simulation (Blue_agents, Red_agents, Door:Door, timestep:int):
     nr_red_agents = len(Red_agents)
     # Main simulation loop
     for timestamp in range(num_timestamps):
-        pole_location = np.array(Door.getposition()[0], Door.getposition()[1] - 0.8)
+        pole_location = np.array(train_door.getposition()[0], train_door.getposition()[1] - 0.8)
         timestamp_agent_data = pd.DataFrame(columns=columns)
         if timestamp*timestep < start_entering:
             distance_for_force = 2.4  # Use the original value before time 150
@@ -209,7 +206,7 @@ def simulation (Blue_agents, Red_agents, Door:Door, timestep:int):
                 'Frustration': current_agent.getfrustration()
             }, index=[current_agent.getid])
 
-            timestamp_agent_data = pd.concat([timestamp_agent_specific_data, timestamp_amagent_data], ignore_index=True)
+            timestamp_agent_data = pd.concat([timestamp_agent_specific_data, timestamp_agent_data], ignore_index=True)
 
         timestamp_Door_data = pd.DataFrame({'Time': timestamp * timestep + 1,
                                             'Door X Position': door.getposition()[0],
@@ -270,7 +267,7 @@ fig, ax = plt.subplots()
 unique_times = range(1, num_timestamps)
 
 # Create the animation
-animation = FuncAnimation(fig, update(), frames=unique_times, interval=50, repeat=True)
+animation = FuncAnimation(fig, update, frames=unique_times, interval=50, repeat=True)
 # To save the animation using Pillow as a gif
 # writer = PillowWriter(fps=15,metadata=dict(artist='Me'),bitrate=1800)
 # animation.save('boarding_animation.gif', writer=writer)
