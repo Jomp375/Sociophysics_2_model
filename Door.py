@@ -50,3 +50,7 @@ class Door:
     def setvelocity(self, velocity):
         self.velocity = velocity
         pass
+
+    def getwidth(self):
+        return self.door_width
+        pass
